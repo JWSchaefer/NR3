@@ -1,5 +1,9 @@
-use nr3::interp::interp_1d::proof;
+use recipies::interp::linear;
+use recipies::interp::polynomial;
+use recipies::interp::spline;
 
 fn main() {
-    proof();
+    linear::proof();
+    polynomial::proof();
+    spline::proof();
 }

@@ -1,7 +1,9 @@
 // pub mod gaussj;
 pub mod interp {
-    pub mod interp_1d;
     pub mod interpolator;
+    pub mod linear;
+    pub mod polynomial;
+    pub mod spline;
 }
 
 pub mod table {

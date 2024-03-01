@@ -3,6 +3,5 @@ pub trait Search {
     type Input;
     type Index;
 
-    fn new(table: &Self::Input) -> Self;
-    fn locate(&mut self, table: &Self::Input, x: Self::Dtype) -> (Self::Index, Self::Index);
+    fn locate(&mut self, table: &Self::Input, x: Self::Dtype) -> Self::Index;
 }

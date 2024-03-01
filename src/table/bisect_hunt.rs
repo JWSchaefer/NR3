@@ -14,12 +14,19 @@ pub struct BisectHunt1D {
 
 /// Defines functions unique to this type of table search
 impl BisectHunt1D {
-    pub fn set_m(&mut self, m: usize) {
-        if m < 2 {
-            panic!("Invalid search parameter m")
+    pub fn new(table: &Array1<f64>, m: usize) -> Self {
+        let dj = cmp::max(1, f64::powf(table.len() as f64, 0.25).trunc() as usize);
+        let ascend = table[table.len() - 1] > table[0];
+
+        Self {
+            m: m,
+            corr: false,
+            ascend: ascend,
+            dj: dj,
+            i_save: None,
         }
-        self.m = m;
     }
+
     fn hunt_bisect(&mut self, table: &Array1<f64>, x: f64) -> usize {
         // Check search value exsits
         // if match self.ascend {
@@ -108,11 +115,13 @@ impl BisectHunt1D {
         // Save location
         self.i_save = Some(lower);
 
-        // Return j_lo, while respecting index bounds
-        cmp::max(
-            0,
-            cmp::min(table.len() - self.m, lower - ((self.m - 2) >> 2)),
-        )
+        if lower < self.m {
+            return 0;
+        } else if lower > table.len() - self.m - 1 {
+            return table.len() - self.m - 1;
+        } else {
+            return lower - ((self.m - 2) >> 1);
+        }
     }
 }
 
@@ -121,21 +130,7 @@ impl Search for BisectHunt1D {
     type Input = Array1<f64>;
     type Index = usize;
 
-    fn new(table: &Self::Input) -> Self {
-        let dj = cmp::min(1, f64::powf(table.len() as f64, 0.25).trunc() as usize);
-        let ascend = table[table.len() - 1] > table[0];
-
-        Self {
-            m: 2,
-            corr: false,
-            ascend: ascend,
-            dj: dj,
-            i_save: None,
-        }
-    }
-
-    fn locate(&mut self, table: &Self::Input, x: f64) -> (Self::Index, Self::Index) {
-        let res = self.hunt_bisect(table, x);
-        return (res, res + (self.m - 1));
+    fn locate(&mut self, table: &Self::Input, x: f64) -> Self::Index {
+        return self.hunt_bisect(table, x);
     }
 }
