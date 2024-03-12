@@ -1,9 +1,9 @@
-use recipies::interp::linear;
+// use recipies::interp::linear;
 use recipies::interp::polynomial;
-use recipies::interp::spline;
+// use recipies::interp::spline;
 
 fn main() {
-    linear::proof();
+    // linear::proof();
     polynomial::proof();
-    spline::proof();
+    // spline::proof();
 }

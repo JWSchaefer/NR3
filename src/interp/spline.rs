@@ -4,7 +4,7 @@ use crate::table::search::Search;
 use ndarray::prelude::*;
 use plotters::prelude::*;
 
-/// 1 Dimensional Spine Interpolator
+/// 1 Dimensional Cubic Spine Interpolator
 pub struct Spline1D {
     x: Array1<f64>,       // x   table
     y: Array1<f64>,       // y   table
@@ -105,7 +105,6 @@ impl Interpolate for Spline1D {
     type Dtype = f64;
     type Data = Array1<Self::Dtype>;
     type Index = usize;
-
     /// Interpolation
     /// #  Arguments
     /// * `x` - The x value for which `f(x)` is being approximated
