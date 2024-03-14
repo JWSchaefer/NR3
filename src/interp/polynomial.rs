@@ -1,8 +1,9 @@
 use crate::table::bisect_hunt::BisectHunt1D;
 use crate::table::search::Search;
 use crate::{interp::interpolator::Interpolate, table::search};
-use ndarray::{prelude::*, stack, Axis};
+use ndarray::{prelude::*, stack, Axis, Zip};
 use plotters::prelude::*;
+use std::ops::SubAssign;
 
 /// 1 Dimensional polynomial interpolator
 /// Based on Neville's Algorithm
@@ -80,22 +81,33 @@ pub fn proof() {
     println!("Starting proof...");
 
     let x = Array1::linspace(-1., 1., 4);
-    // let y = x.map(|i| i * i);
     let y = Array1::linspace(-1., 1., 4);
 
-    let coefs1 = ceoficients_2(&x.clone().to_owned(), &y.clone().to_owned());
+    let coefs_1_0 = ceoficients_1_0(&x.clone().to_owned(), &y.clone().to_owned());
+    let coefs_1_1 = ceoficients_1_1(&x.clone().to_owned(), &y.clone().to_owned());
 
-    let _x = stack![
-        Axis(1),
-        x.clone().to_owned().mapv(|a| a.powi(0)),
-        x.clone().to_owned().mapv(|a| a.powi(1)),
-        x.clone().to_owned().mapv(|a| a.powi(2)),
-        x.clone().to_owned().mapv(|a| a.powi(3))
-    ];
+    fn test(coefs: Array1<f64>, x: &Array1<f64>, y: &Array1<f64>) {
+        let _x = stack![
+            Axis(1),
+            x.clone().to_owned().mapv(|a| a.powi(0)),
+            x.clone().to_owned().mapv(|a| a.powi(1)),
+            x.clone().to_owned().mapv(|a| a.powi(2)),
+            x.clone().to_owned().mapv(|a| a.powi(3))
+        ];
+        // println!("Coeficients: {}", coefs);
+        // println!("True y {}", y);
+        // println!("X . ceofs {}", _x.dot(&coefs));
 
-    println!("Coeficients: {}", coefs1);
-    println!("True y {}", y);
-    println!("X . ceofs {}", _x.dot(&coefs1));
+        let err = 100. * (y - _x.dot(&coefs)).dot(&(y - _x.dot(&coefs))) / (x.len() as f64);
+        println!("Error:\t{err} %");
+    }
+
+    println!("\nceoficients_1_0");
+    test(coefs_1_0, &x, &y);
+
+    println!("\nceoficients_1_1");
+    test(coefs_1_1, &x, &y);
+    // test(coefs_1_1, &x, &y);
 
     // let x_gt = Array1::linspace(0., 3.14159265 * 2., 1000);
     // let y_gt = x_gt.clone().map(|&x| f64::sin(x));
@@ -135,10 +147,10 @@ pub fn proof() {
     // println!("Proof complete.");
 }
 
-fn ceoficients_1(x: Array1<f64>, y: Array1<f64>) -> Array1<f64> {
+fn ceoficients_1_0(x: &Array1<f64>, y: &Array1<f64>) -> Array1<f64> {
     let n = x.len();
-    let mut s = Array1::<f64>::from_elem([n], 0.);
-    let mut coef = Array1::<f64>::from_elem([n], 0.);
+    let mut s = Array1::<f64>::zeros([n]);
+    let mut coef = Array1::<f64>::zeros([n]);
 
     s[n - 1] = -x[0];
 
@@ -155,12 +167,60 @@ fn ceoficients_1(x: Array1<f64>, y: Array1<f64>) -> Array1<f64> {
             phi = (k as f64) * s[k] + x[j] * phi
         }
         let ff = y[j] / phi;
+
         let mut b = 1.0;
         for k in (0..n).rev() {
             coef[k] += b * ff;
+            println!("c: {}", coef[k]);
             b = s[k] + x[j] * b;
+            println!("b: {}", b);
         }
     }
+    print!("\n\n______\n");
+
+    coef
+}
+
+fn ceoficients_1_1(x: &Array1<f64>, y: &Array1<f64>) -> Array1<f64> {
+    let shape = x.raw_dim();
+    let n = x.len();
+
+    let mut s = Array1::<f64>::zeros(shape);
+    let mut b = Array1::<f64>::ones(shape);
+    let mut coef = Array1::<f64>::zeros(shape);
+
+    s[n - 1] = -x[0];
+
+    for i in 1..n {
+        let s_j_1 = s.slice(s![n - i..n]).to_owned();
+        let mut s_j = s.slice_mut(s![n - 1 - i..n - 1]);
+
+        s_j.sub_assign(&(x[i] * s_j_1));
+
+        s[n - 1] -= x[i];
+    }
+
+    let mut phi = Array1::<f64>::from_elem(x.raw_dim(), n as f64);
+    let k = Array1::linspace((n - 1) as f64, 1., n - 1);
+    let s_k = s.slice(s![1..n;-1]);
+
+    phi.zip_mut_with(&x, |p, x_j| {
+        *p = (&k * &s_k).iter().fold(*p, |acc, _a| _a + x_j * acc)
+    });
+
+    phi = y / phi;
+
+    let k = s![0..n;-1];
+
+    let mut coef_k = coef.slice_mut(k);
+    let s_k = s.slice(k);
+
+    Zip::from(&mut b).and(&phi).and(x).for_each(|_b, &_p, &_x| {
+        Zip::from(&mut coef_k).and(&s_k).for_each(|_c, &_s| {
+            *_c += *_b * _p;
+            *_b = _s + _x * *_b;
+        })
+    });
 
     coef
 }
