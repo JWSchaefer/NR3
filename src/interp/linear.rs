@@ -1,4 +1,4 @@
-use crate::interp::interpolator::Interpolate;
+use crate::interp::interpolator::Interpolate1D;
 use crate::table::bisect_hunt::BisectHunt1D;
 use crate::table::search::Search;
 use ndarray::prelude::*;
@@ -44,7 +44,7 @@ impl Linear1D {
     }
 }
 
-impl Interpolate for Linear1D {
+impl Interpolate1D for Linear1D {
     type Dtype = f64;
     type Data = Array1<Self::Dtype>;
     type Index = usize;

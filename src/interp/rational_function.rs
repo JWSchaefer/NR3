@@ -57,7 +57,7 @@ impl Poly1D {
     }
 }
 
-impl Interpolate for Poly1D {
+impl Interpolate1D for Poly1D {
     type Dtype = f64;
     type Data = Array1<Self::Dtype>;
     type Index = usize;

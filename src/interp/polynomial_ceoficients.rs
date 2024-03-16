@@ -87,7 +87,7 @@ fn polcof(x: &Array1<f64>, y: &Array1<f64>) -> Array1<f64> {
     for j in 0..n {
         let mut interp = Poly1D::new(xa.clone().to_owned(), ya.clone().to_owned(), n - j - 1);
 
-        coef[j] = interp._interpolate(0., 0);
+        coef[j] = interp.raw_interpolate(0., 0);
 
         let mut k = None;
         let mut xmin = 1.0e99;

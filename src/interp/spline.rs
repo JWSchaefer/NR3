@@ -1,4 +1,4 @@
-use crate::interp::interpolator::Interpolate;
+use crate::interp::interpolator::Interpolate1D;
 use crate::table::bisect_hunt::BisectHunt1D;
 use crate::table::search::Search;
 use ndarray::prelude::*;
@@ -101,28 +101,21 @@ impl Spline1D {
     }
 }
 
-impl Interpolate for Spline1D {
+impl Interpolate1D for Spline1D {
     type Dtype = f64;
-    type X = Array1<Self::Dtype>;
-    type IndX = usize;
-    type Y = Array1<Self::Dtype>;
-    type IndY = usize;
+    type Data = Array1<Self::Dtype>;
+    type Index = usize;
     /// Interpolation
     /// #  Arguments
     /// * `x` - The x value for which `f(x)` is being approximated
     /// # Returns
     /// * `y : f64` - An approximation of `f(x)`
-    fn interpolate(&mut self, x: Self::X) -> Self::Dtype {
-        return x
-            .iter()
-            .map(|_x| {
-                // Get indecies
-                let i = self.search.locate(&self.x, *_x);
+    fn interpolate(&mut self, x: Self::Dtype) -> Self::Dtype {
+        // Get indecies
+        let i = self.search.locate(&self.x, x);
 
-                // Evaluate
-                self._interpolate(*_x, i)
-            })
-            .collect();
+        // Evaluate
+        self._interpolate(x, i)
     }
 }
 
