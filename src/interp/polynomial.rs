@@ -3,6 +3,7 @@ use crate::table::search::Search;
 use crate::{interp::interpolator::Interpolate, table::search};
 use ndarray::{prelude::*, stack, Axis, Zip};
 use plotters::prelude::*;
+use std::iter::zip;
 use std::ops::SubAssign;
 
 /// 1 Dimensional polynomial interpolator
@@ -80,33 +81,6 @@ pub fn proof() {
     // Revisit this
     println!("Starting proof...");
 
-    let x = Array1::linspace(-1., 1., 4);
-    let y = Array1::linspace(-1., 1., 4);
-
-    let coefs_1_0 = ceoficients_1_0(&x.clone().to_owned(), &y.clone().to_owned());
-    let coefs_1_1 = ceoficients_1_1(&x.clone().to_owned(), &y.clone().to_owned());
-
-    fn test(coefs: Array1<f64>, x: &Array1<f64>, y: &Array1<f64>) {
-        let _x = stack![
-            Axis(1),
-            x.clone().to_owned().mapv(|a| a.powi(0)),
-            x.clone().to_owned().mapv(|a| a.powi(1)),
-            x.clone().to_owned().mapv(|a| a.powi(2)),
-            x.clone().to_owned().mapv(|a| a.powi(3))
-        ];
-        // println!("Coeficients: {}", coefs);
-        // println!("True y {}", y);
-        // println!("X . ceofs {}", _x.dot(&coefs));
-
-        let err = 100. * (y - _x.dot(&coefs)).dot(&(y - _x.dot(&coefs))) / (x.len() as f64);
-        println!("Error:\t{err} %");
-    }
-
-    println!("\nceoficients_1_0");
-    test(coefs_1_0, &x, &y);
-
-    println!("\nceoficients_1_1");
-    test(coefs_1_1, &x, &y);
     // test(coefs_1_1, &x, &y);
 
     // let x_gt = Array1::linspace(0., 3.14159265 * 2., 1000);
@@ -171,12 +145,9 @@ fn ceoficients_1_0(x: &Array1<f64>, y: &Array1<f64>) -> Array1<f64> {
         let mut b = 1.0;
         for k in (0..n).rev() {
             coef[k] += b * ff;
-            println!("c: {}", coef[k]);
             b = s[k] + x[j] * b;
-            println!("b: {}", b);
         }
     }
-    print!("\n\n______\n");
 
     coef
 }
@@ -233,8 +204,6 @@ fn ceoficients_2(x: &Array1<f64>, y: &Array1<f64>) -> Array1<f64> {
     let mut ya = y.clone().to_owned();
 
     for j in 0..n {
-        println!("{n}-{j} : {}", n - j);
-
         let mut interp = Poly1D::new(xa.clone().to_owned(), ya.clone().to_owned(), n - j - 1);
 
         coef[j] = interp._interpolate(0., 0);
